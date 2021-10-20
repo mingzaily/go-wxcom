@@ -5,8 +5,8 @@
 ## Feature
 
 - 通讯录管理
-  - 成员管理
-  - 部门管理
+  - [ ] 成员管理
+  - [ ] 部门管理
 - 消息管理
   - [x] 发送应用信息
   - 发送消息到群聊会话
@@ -17,12 +17,15 @@
 package main
 
 import (
-  "github.com/mingzaily/wxcom-sdk"
+  wxcom "github.com/mingzaily/wxcom-sdk"
+  message "github.com/mingzaily/wxcom-sdk/message"
 )
 
-message := wxcom.New("corpid", "corpsecret", agentid).M()
-resp, err := message.SendAppTxtMessage(&wxcom.AppTxtMessageRequest{
-	...
-})
+client := wxcom.New("corpid", "corpsecret", agentid)
+
+// 应用信息推送
+ms := message.NewWithClient(client).SendAppMessage(
+	message.NewAppTxtMessage(...)
+)
 
 ```

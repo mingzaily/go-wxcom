@@ -9,7 +9,7 @@ type Message struct {
 	url    string
 }
 
-type SendMessageRequest interface {
+type SendAppMessageRequest interface {
 	Sendable() bool
 	SetAgentid(agentid int)
 }
@@ -21,7 +21,7 @@ func NewWithClient(client *wxcom.Client) *Message {
 	}
 }
 
-func (m *Message) SendAppMessage(request SendMessageRequest) (*AppMessageResponse, error) {
+func (m *Message) SendAppMessage(request SendAppMessageRequest) (*AppMessageResponse, error) {
 	var response *AppMessageResponse
 
 	if !request.Sendable() {
