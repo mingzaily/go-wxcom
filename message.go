@@ -11,6 +11,26 @@ type MessageRequest interface {
 	setAgentid(agentid int)
 }
 
+func (m *Message) SetTouser(userIdList []string) *Message {
+
+}
+
+func (m *Message) SetToparty(userIdList []string) *Message {
+
+}
+
+func (m *Message) SetTotag(tag string) *Message {
+
+}
+
+func (m *Message) SetMarkdown(content string) *Message {
+
+}
+
+func (m *Message) SetText(content string) *Message {
+
+}
+
 // SendAppMessage Send application push messages.
 func (m *Message) SendAppMessage(request MessageRequest) (*AppMessageResponse, error) {
 	var response *AppMessageResponse
