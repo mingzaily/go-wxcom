@@ -1,12 +1,11 @@
-package message
+package wxcom
 
 import (
-	"github.com/mingzaily/wxcom-sdk"
 	"testing"
 )
 
 func TestMessage_SendAppTxtMessage(t *testing.T) {
-	client := wx_com.New("", "", 0)
+	client := New("", "", 0)
 	m := NewWithClient(client)
 	r := NewAppTextMessageRequest("", "", "", "", 0)
 
@@ -17,7 +16,7 @@ func TestMessage_SendAppTxtMessage(t *testing.T) {
 }
 
 func TestMessage_SendAppMarkdownMessage(t *testing.T) {
-	client := wx_com.New("", "", 1000195).SetDebug(true)
+	client := New("", "", 1000195).SetHttpDebug(true)
 	m := NewWithClient(client)
 	r := NewAppMarkdownMessageRequest("", "", "", "", 0)
 

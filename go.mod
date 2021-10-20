@@ -1,4 +1,4 @@
-module github.com/mingzaily/wxcom-sdk
+module github.com/mingzaily/go-wxcom
 
 go 1.16
 

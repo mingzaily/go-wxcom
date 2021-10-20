@@ -1,4 +1,4 @@
-package message
+package wxcom
 
 // common
 type appMessageCommon struct {
@@ -23,11 +23,11 @@ type appTextMessageRequest struct {
 	Text appMessageContent `json:"text"`
 }
 
-func (a *appTextMessageRequest) Sendable() bool {
+func (a *appTextMessageRequest) sendable() bool {
 	return !(a.Touser == "" && a.Toparty == "" && a.Totag == "")
 }
 
-func (a *appTextMessageRequest) SetAgentid(agentid int) {
+func (a *appTextMessageRequest) setAgentid(agentid int) {
 	a.Agentid = agentid
 }
 
@@ -52,11 +52,11 @@ type appMessageMarkdownRequest struct {
 	Markdown appMessageContent `json:"markdown"`
 }
 
-func (a *appMessageMarkdownRequest) Sendable() bool {
+func (a *appMessageMarkdownRequest) sendable() bool {
 	return !(a.Touser == "" && a.Toparty == "" && a.Totag == "")
 }
 
-func (a *appMessageMarkdownRequest) SetAgentid(agentid int) {
+func (a *appMessageMarkdownRequest) setAgentid(agentid int) {
 	a.Agentid = agentid
 }
 

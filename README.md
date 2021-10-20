@@ -1,5 +1,8 @@
 # wxcom-sdk
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/mingzaily/wxcom-sdk)](https://goreportcard.com/report/github.com/mingzaily/wxcom-sdk)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/mingzaily/wxcom-sdk)
+
 企业微信 SDK
 
 ## Feature
@@ -17,8 +20,8 @@
 package main
 
 import (
-  wxcom "github.com/mingzaily/wxcom-sdk"
-  message "github.com/mingzaily/wxcom-sdk/message"
+  wxcom "github.com/mingzaily/go-wxcom"
+  message "github.com/mingzaily/go-wxcom/message"
 )
 
 client := wxcom.New("corpid", "corpsecret", agentid)
