@@ -1,7 +1,11 @@
 language: go
 
 go:
-  - 1.15.0
+  - 1.15.x
+
+branches:
+  only:
+    - master
 
 before_install:
   - go get -t -v ./...
