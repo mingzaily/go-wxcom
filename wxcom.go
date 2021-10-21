@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/patrickmn/go-cache"
-	"sync"
 	"time"
 )
 
@@ -21,7 +20,6 @@ type Wxcom struct {
 	agentid    int
 	cache      *cache.Cache
 	resty      *resty.Client
-	mutex      *sync.RWMutex
 }
 
 // New method creates a new Wxcom client.
@@ -32,11 +30,19 @@ func New(corpid, corpsecret string, agentid int) *Wxcom {
 		agentid:    agentid,
 		cache:      cache.New(5*time.Minute, 10*time.Minute),
 		resty:      resty.New(),
-		mutex:      &sync.RWMutex{},
 	}
 }
 
-func (w *Wxcom) SetRequestDebug(d bool) *Wxcom {
+// SetAccessToken method sets the access token in the client instance.
+func (w *Wxcom) setAccessToken(accessToken string) *Wxcom {
+	w.cache.Set("access_token_"+fmt.Sprintf("%d", w.agentid), accessToken, 3600*time.Second)
+	return w
+}
+
+// SetRestyDebug method enables the debug mode on Resty client. Client logs details of every request and response.
+// For `Request` it logs information such as HTTP verb, Relative URL path, Host, Headers, Body if it has one.
+// For `Response` it logs information such as Status, Response Time, Headers, Body if it has one.
+func (w *Wxcom) SetRestyDebug(d bool) *Wxcom {
 	w.resty.SetDebug(d)
 	return w
 }
@@ -48,12 +54,11 @@ type accessTokenResponse struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-func (w *Wxcom) getAccessToken() string {
+func (w *Wxcom) getAccessTokenFromServer() *accessTokenResponse {
 	var response *accessTokenResponse
-	var cacheKey = "access_token_" + fmt.Sprintf("%d", w.agentid)
 
-	if value, found := w.cache.Get(cacheKey); found {
-		return value.(string)
+	if w.corpid == "" && w.corpsecret == "" {
+		panic("corpid and corpsecret cannot be empty")
 	}
 
 	_, err := w.resty.R().
@@ -68,15 +73,28 @@ func (w *Wxcom) getAccessToken() string {
 		panic(response.Errmsg)
 	}
 
-	w.cache.Set(cacheKey, response.AccessToken, time.Duration(response.ExpiresIn-60)*time.Second)
-
-	return response.AccessToken
+	return response
 }
 
-// M create notice push client with sdk client
-func (w *Wxcom) M() *Message {
+func (w *Wxcom) getAccessToken() string {
+	var cacheKey = "access_token_" + fmt.Sprintf("%d", w.agentid)
+
+	if value, found := w.cache.Get(cacheKey); found {
+		return value.(string)
+	}
+
+	resp := w.getAccessTokenFromServer()
+
+	w.cache.Set(cacheKey, resp.AccessToken, time.Duration(resp.ExpiresIn-60)*time.Second)
+
+	return resp.AccessToken
+}
+
+// Message method creates a new message instance, its used for send message to user form App.
+func (w *Wxcom) Message() *Message {
 	return &Message{
-		wxcom: w,
-		url:   "https://qyapi.weixin.qq.com/cgi-bin/message/send",
+		wxcom:   w,
+		url:     "https://qyapi.weixin.qq.com/cgi-bin/message/send",
+		agentid: w.agentid,
 	}
 }
