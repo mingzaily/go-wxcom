@@ -1,5 +1,7 @@
 # wxcom-sdk
 
+![Travis (.org)](https://img.shields.io/travis/mingzaily/go-wxcom)
+![Codecov](https://img.shields.io/codecov/c/github/mingzaily/go-wxcom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mingzaily/wxcom-sdk)](https://goreportcard.com/report/github.com/mingzaily/wxcom-sdk)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/mingzaily/wxcom-sdk)
 
