@@ -224,6 +224,7 @@ func (i *image) Send() (*MessageResponse, error) {
 	}
 	body["msgtype"] = "image"
 	body["image"] = map[string]string{"media_id": i.mediaId}
+	body["safe"] = i.safe
 
 	resp, err := i.message.send(body)
 	if err != nil {
