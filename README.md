@@ -1,4 +1,4 @@
-# wxcom-sdk
+# go-wxcom
 
 ![Travis (.org)](https://img.shields.io/travis/mingzaily/go-wxcom)
 ![Codecov](https://img.shields.io/codecov/c/github/mingzaily/go-wxcom)
@@ -25,7 +25,11 @@
     - [ ] 获取群聊会话
     - [ ] 应用推送信息
 
-## 使用方式
+## 使用
+
+`go get github.com/mingzaily/go-wxcom`
+
+## Example
 
 ```go
 package main

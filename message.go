@@ -1,6 +1,7 @@
 package wxcom
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -27,10 +28,10 @@ type MessageResponse struct {
 	ResponseCode string `json:"response_code"`
 }
 
-func (m *Message) body() map[string]interface{} {
+func (m *Message) body() (map[string]interface{}, error) {
 
 	if m.touser == "" && m.toparty == "" && m.totag == "" {
-		panic("touser, toparty, totag cannot be empty at the same time")
+		return nil, errors.New("touser, toparty, totag cannot be empty at the same time")
 	}
 
 	body := map[string]interface{}{
@@ -42,7 +43,7 @@ func (m *Message) body() map[string]interface{} {
 		"duplicate_check_interval": m.duplicateCheckInterval,
 	}
 
-	return body
+	return body, nil
 }
 
 func (m *Message) send(body map[string]interface{}) (*MessageResponse, error) {
@@ -58,8 +59,7 @@ func (m *Message) send(body map[string]interface{}) (*MessageResponse, error) {
 		return nil, err
 	}
 
-	if response.Errcode == 42001 {
-		m.wxcom.setAccessToken(m.wxcom.getAccessTokenFromServer().AccessToken)
+	if IsTokenInvalidErr(response.Errcode, m.wxcom) {
 		return m.send(body)
 	}
 
@@ -182,7 +182,10 @@ func (t *Text) SetEnableIdTrans(enableIdTrans int) *Text {
 
 // Send method does send message.
 func (t *Text) Send() (*MessageResponse, error) {
-	body := t.message.body()
+	body, err := t.message.body()
+	if err != nil {
+		return nil, err
+	}
 	body["msgtype"] = "text"
 	body["text"] = map[string]string{"content": t.content}
 	body["safe"] = t.safe
@@ -215,7 +218,10 @@ func (i *Image) SetSafe(safe int) *Image {
 
 // Send method does send message.
 func (i *Image) Send() (*MessageResponse, error) {
-	body := i.message.body()
+	body, err := i.message.body()
+	if err != nil {
+		return nil, err
+	}
 	body["msgtype"] = "image"
 	body["image"] = map[string]string{"media_id": i.mediaId}
 
@@ -239,7 +245,10 @@ type Voice struct {
 
 // Send method does send message.
 func (v *Voice) Send() (*MessageResponse, error) {
-	body := v.message.body()
+	body, err := v.message.body()
+	if err != nil {
+		return nil, err
+	}
 	body["msgtype"] = "voice"
 	body["voice"] = map[string]string{"media_id": v.mediaId}
 
@@ -272,7 +281,10 @@ func (v *Video) SetSafe(safe int) *Video {
 
 // Send method does send message.
 func (v *Video) Send() (*MessageResponse, error) {
-	body := v.message.body()
+	body, err := v.message.body()
+	if err != nil {
+		return nil, err
+	}
 	body["msgtype"] = "video"
 	body["video"] = map[string]string{"media_id": v.mediaId, "title": v.title, "description": v.description}
 	body["safe"] = v.safe
@@ -304,7 +316,10 @@ func (f *File) SetSafe(safe int) *File {
 
 // Send method does send message.
 func (f *File) Send() (*MessageResponse, error) {
-	body := f.message.body()
+	body, err := f.message.body()
+	if err != nil {
+		return nil, err
+	}
 	body["msgtype"] = "file"
 	body["file"] = map[string]string{"media_id": f.mediaId}
 	body["safe"] = f.safe
@@ -338,14 +353,17 @@ func (t *Textcard) SetEnableIdTrans(enableIdTrans int) *Textcard {
 }
 
 // SetBtntxt method sets the textcard message btn txt.
-func (t *Textcard) SetBtntxt(enableIdTrans int) *Textcard {
-	t.enableIdTrans = enableIdTrans
+func (t *Textcard) SetBtntxt(btntxt string) *Textcard {
+	t.btntxt = btntxt
 	return t
 }
 
 // Send method does send message.
 func (t *Textcard) Send() (*MessageResponse, error) {
-	body := t.message.body()
+	body, err := t.message.body()
+	if err != nil {
+		return nil, err
+	}
 	body["msgtype"] = "textcard"
 	body["textcard"] = map[string]string{"title": t.title, "description": t.description, "url": t.url, "btntxt": t.btntxt}
 	body["enable_id_trans"] = t.enableIdTrans
@@ -370,7 +388,10 @@ type Markdown struct {
 
 // Send method does send message.
 func (m *Markdown) Send() (*MessageResponse, error) {
-	body := m.message.body()
+	body, err := m.message.body()
+	if err != nil {
+		return nil, err
+	}
 	body["msgtype"] = "markdown"
 	body["markdown"] = map[string]string{"content": m.content}
 

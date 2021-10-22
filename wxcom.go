@@ -33,12 +33,6 @@ func New(corpid, corpsecret string, agentid int) *Wxcom {
 	}
 }
 
-// SetAccessToken method sets the access token in the client instance.
-func (w *Wxcom) setAccessToken(accessToken string) *Wxcom {
-	w.cache.Set("access_token_"+fmt.Sprintf("%d", w.agentid), accessToken, 3600*time.Second)
-	return w
-}
-
 // SetRestyDebug method enables the debug mode on Resty client. Client logs details of every request and response.
 // For `Request` it logs information such as HTTP verb, Relative URL path, Host, Headers, Body if it has one.
 // For `Response` it logs information such as Status, Response Time, Headers, Body if it has one.
@@ -97,4 +91,17 @@ func (w *Wxcom) Message() *Message {
 		url:     "https://qyapi.weixin.qq.com/cgi-bin/message/send",
 		agentid: w.agentid,
 	}
+}
+
+//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+// Common method
+//__________________________________________________
+
+// IsTokenInvalidErr method check whether the token has expired.
+func IsTokenInvalidErr(errcode int, w *Wxcom) bool {
+	if errcode == 42001 || errcode == 40014 {
+		w.cache.Delete("access_token_" + fmt.Sprintf("%d", w.agentid))
+		return true
+	}
+	return false
 }
