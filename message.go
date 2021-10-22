@@ -97,32 +97,32 @@ func (m *Message) SetDuplicateCheck(enableDuplicateCheck, duplicateCheckInterval
 }
 
 // Text method creates text message.
-func (m *Message) Text(content string) *Text {
-	return &Text{
+func (m *Message) Text(content string) *text {
+	return &text{
 		message: m,
 		content: content,
 	}
 }
 
 // Image method creates image message.
-func (m *Message) Image(mediaId string) *Image {
-	return &Image{
+func (m *Message) Image(mediaId string) *image {
+	return &image{
 		message: m,
 		mediaId: mediaId,
 	}
 }
 
 // Voice method creates voice message.
-func (m *Message) Voice(mediaId string) *Voice {
-	return &Voice{
+func (m *Message) Voice(mediaId string) *voice {
+	return &voice{
 		message: m,
 		mediaId: mediaId,
 	}
 }
 
 // Video method creates video message.
-func (m *Message) Video(mediaId, title, description string) *Video {
-	return &Video{
+func (m *Message) Video(mediaId, title, description string) *video {
+	return &video{
 		message:     m,
 		mediaId:     mediaId,
 		title:       title,
@@ -131,16 +131,16 @@ func (m *Message) Video(mediaId, title, description string) *Video {
 }
 
 // File method creates file message.
-func (m *Message) File(mediaId string) *File {
-	return &File{
+func (m *Message) File(mediaId string) *file {
+	return &file{
 		message: m,
 		mediaId: mediaId,
 	}
 }
 
 // Textcard method creates textcard message.
-func (m *Message) Textcard(title, description, url string) *Textcard {
-	return &Textcard{
+func (m *Message) Textcard(title, description, url string) *textcard {
+	return &textcard{
 		message:     m,
 		title:       title,
 		description: description,
@@ -149,19 +149,19 @@ func (m *Message) Textcard(title, description, url string) *Textcard {
 }
 
 // Markdown method creates markdown message.
-func (m *Message) Markdown(content string) *Markdown {
-	return &Markdown{
+func (m *Message) Markdown(content string) *markdown {
+	return &markdown{
 		message: m,
 		content: content,
 	}
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Text
+// text
 //__________________________________________________
 
-// Text struct is used to compose txt message push from message client.
-type Text struct {
+// text struct is used to compose txt message push from message client.
+type text struct {
 	message       *Message
 	content       string
 	safe          int
@@ -169,19 +169,19 @@ type Text struct {
 }
 
 // SetSafe method sets the message is confident.
-func (t *Text) SetSafe(safe int) *Text {
+func (t *text) SetSafe(safe int) *text {
 	t.safe = safe
 	return t
 }
 
 // SetEnableIdTrans method sets the message enable id translation.
-func (t *Text) SetEnableIdTrans(enableIdTrans int) *Text {
+func (t *text) SetEnableIdTrans(enableIdTrans int) *text {
 	t.enableIdTrans = enableIdTrans
 	return t
 }
 
 // Send method does send message.
-func (t *Text) Send() (*MessageResponse, error) {
+func (t *text) Send() (*MessageResponse, error) {
 	body, err := t.message.body()
 	if err != nil {
 		return nil, err
@@ -200,24 +200,24 @@ func (t *Text) Send() (*MessageResponse, error) {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Image
+// image
 //__________________________________________________
 
-// Image struct is used to compose image message push from message client.
-type Image struct {
+// image struct is used to compose image message push from message client.
+type image struct {
 	message *Message
 	mediaId string
 	safe    int
 }
 
 // SetSafe method sets the message is confident.
-func (i *Image) SetSafe(safe int) *Image {
+func (i *image) SetSafe(safe int) *image {
 	i.safe = safe
 	return i
 }
 
 // Send method does send message.
-func (i *Image) Send() (*MessageResponse, error) {
+func (i *image) Send() (*MessageResponse, error) {
 	body, err := i.message.body()
 	if err != nil {
 		return nil, err
@@ -234,17 +234,17 @@ func (i *Image) Send() (*MessageResponse, error) {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Voice
+// voice
 //__________________________________________________
 
-// Voice struct is used to compose voice message push from message client.
-type Voice struct {
+// voice struct is used to compose voice message push from message client.
+type voice struct {
 	message *Message
 	mediaId string
 }
 
 // Send method does send message.
-func (v *Voice) Send() (*MessageResponse, error) {
+func (v *voice) Send() (*MessageResponse, error) {
 	body, err := v.message.body()
 	if err != nil {
 		return nil, err
@@ -261,11 +261,11 @@ func (v *Voice) Send() (*MessageResponse, error) {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Video
+// video
 //__________________________________________________
 
-// Video struct is used to compose video message push from message client.
-type Video struct {
+// video struct is used to compose video message push from message client.
+type video struct {
 	message     *Message
 	mediaId     string
 	title       string
@@ -274,13 +274,13 @@ type Video struct {
 }
 
 // SetSafe method sets the message is confident.
-func (v *Video) SetSafe(safe int) *Video {
+func (v *video) SetSafe(safe int) *video {
 	v.safe = safe
 	return v
 }
 
 // Send method does send message.
-func (v *Video) Send() (*MessageResponse, error) {
+func (v *video) Send() (*MessageResponse, error) {
 	body, err := v.message.body()
 	if err != nil {
 		return nil, err
@@ -298,24 +298,24 @@ func (v *Video) Send() (*MessageResponse, error) {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// File
+// file
 //__________________________________________________
 
-// File struct is used to compose file message push from message client.
-type File struct {
+// file struct is used to compose file message push from message client.
+type file struct {
 	message *Message
 	mediaId string
 	safe    int
 }
 
 // SetSafe method sets the message is confident.
-func (f *File) SetSafe(safe int) *File {
+func (f *file) SetSafe(safe int) *file {
 	f.safe = safe
 	return f
 }
 
 // Send method does send message.
-func (f *File) Send() (*MessageResponse, error) {
+func (f *file) Send() (*MessageResponse, error) {
 	body, err := f.message.body()
 	if err != nil {
 		return nil, err
@@ -333,11 +333,11 @@ func (f *File) Send() (*MessageResponse, error) {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Textcard
+// textcard
 //__________________________________________________
 
-// Textcard struct is used to compose textcard message push from message client.
-type Textcard struct {
+// textcard struct is used to compose textcard message push from message client.
+type textcard struct {
 	message       *Message
 	title         string
 	description   string
@@ -347,19 +347,19 @@ type Textcard struct {
 }
 
 // SetEnableIdTrans method sets the message enable id translation.
-func (t *Textcard) SetEnableIdTrans(enableIdTrans int) *Textcard {
+func (t *textcard) SetEnableIdTrans(enableIdTrans int) *textcard {
 	t.enableIdTrans = enableIdTrans
 	return t
 }
 
 // SetBtntxt method sets the textcard message btn txt.
-func (t *Textcard) SetBtntxt(btntxt string) *Textcard {
+func (t *textcard) SetBtntxt(btntxt string) *textcard {
 	t.btntxt = btntxt
 	return t
 }
 
 // Send method does send message.
-func (t *Textcard) Send() (*MessageResponse, error) {
+func (t *textcard) Send() (*MessageResponse, error) {
 	body, err := t.message.body()
 	if err != nil {
 		return nil, err
@@ -377,17 +377,17 @@ func (t *Textcard) Send() (*MessageResponse, error) {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Markdown
+// markdown
 //__________________________________________________
 
-// Markdown struct is used to compose markdown message push from message client.
-type Markdown struct {
+// markdown struct is used to compose markdown message push from message client.
+type markdown struct {
 	message *Message
 	content string
 }
 
 // Send method does send message.
-func (m *Markdown) Send() (*MessageResponse, error) {
+func (m *markdown) Send() (*MessageResponse, error) {
 	body, err := m.message.body()
 	if err != nil {
 		return nil, err
