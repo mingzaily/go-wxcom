@@ -12,16 +12,16 @@ type respAccessToken struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-func (c *Client) getAccessTokenFromServer() *respAccessToken {
+func (a *App) getAccessTokenFromServer() *respAccessToken {
 	var response *respAccessToken
 
-	if c.corpid == "" && c.corpsecret == "" {
+	if a.corpid == "" && a.corpsecret == "" {
 		panic("corpid and corpsecret cannot be empty")
 	}
 
-	_, err := c.Resty.R().
-		SetQueryParam("corpid", c.corpid).
-		SetQueryParam("corpsecret", c.corpsecret).
+	_, err := a.Resty.R().
+		SetQueryParam("corpid", a.corpid).
+		SetQueryParam("corpsecret", a.corpsecret).
 		SetResult(&response).
 		Get("/cgi-bin/gettoken")
 	if err != nil {
@@ -35,15 +35,15 @@ func (c *Client) getAccessTokenFromServer() *respAccessToken {
 	return response
 }
 
-func (c *Client) GetAccessToken() string {
-	var cacheKey = "access_token_" + fmt.Sprintf("%d", c.agentid)
+func (a *App) GetAccessToken() string {
+	var cacheKey = "access_token_" + fmt.Sprintf("%d", a.agentid)
 
-	if value, found := c.cache.Get(cacheKey); found {
+	if value, found := a.cache.Get(cacheKey); found {
 		return value.(string)
 	}
 
-	resp := c.getAccessTokenFromServer()
-	c.cache.Set(cacheKey, resp.AccessToken, time.Duration(resp.ExpiresIn-60)*time.Second)
+	resp := a.getAccessTokenFromServer()
+	a.cache.Set(cacheKey, resp.AccessToken, time.Duration(resp.ExpiresIn-60)*time.Second)
 
 	return resp.AccessToken
 }

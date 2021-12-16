@@ -1,13 +1,16 @@
 package message
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/mingzaily/go-wxcom"
+	"log"
+	"strings"
 )
 
-// Message struct is used to compose and fire individual msg push from wxcom client.
+// Message struct is used to compose and fire individual message push with wxcom App client.
 type Message struct {
-	client                 *wxcom.Client
+	app                    *wxcom.App
 	path                   string
 	msgType                string
 	toUser                 string
@@ -27,7 +30,7 @@ type Message struct {
 	duplicateCheckInterval int
 }
 
-// RespMessage struct holds response values of send msg.
+// RespMessage struct holds response values of send message.
 type RespMessage struct {
 	Errcode      int    `json:"errcode"`
 	Errmsg       string `json:"errmsg"`
@@ -38,101 +41,99 @@ type RespMessage struct {
 	ResponseCode string `json:"response_code"`
 }
 
-// New method creates a new Message client with wxcom client.
-func New(client *wxcom.Client) *Message {
+// NewWithApp method creates a new Message client with wxcom App client.
+func NewWithApp(client *wxcom.App) *Message {
 	return &Message{
-		client: client,
-		path:   "/cgi-bin/msg/send",
+		app:  client,
+		path: "/cgi-bin/message/send",
 	}
 }
 
-// Text method creates text msg.
-func (m *Message) Text(content string) *text {
-	return &text{
-		base:    base{message: m},
-		content: content,
-	}
+// ToUser method sets to user to in the current message.
+func (m *Message) ToUser(userList []string) *Message {
+	m.toUser = strings.Join(userList, "|")
+	return m
 }
 
-// Image method creates image msg.
-func (m *Message) Image(mediaId string) *image {
-	return &image{
-		base:    base{message: m},
-		mediaId: mediaId,
-	}
+// ToParty method sets to party to in the current message.
+func (m *Message) ToParty(partyList []string) *Message {
+	m.toParty = strings.Join(partyList, "|")
+	return m
 }
 
-// Voice method creates voice msg.
-func (m *Message) Voice(mediaId string) *voice {
-	return &voice{
-		base:    base{message: m},
-		mediaId: mediaId,
-	}
+// ToTag method sets to tag to in the current message.
+func (m *Message) ToTag(tagList []string) *Message {
+	m.toTag = strings.Join(tagList, "|")
+	return m
 }
 
-// Video method creates video msg.
-func (m *Message) Video(mediaId string) *video {
-	return &video{
-		base:    base{message: m},
-		mediaId: mediaId,
-	}
+// SetSafe method sets the message is confident.
+// Support Message Kind: Text, Image, Video, File
+func (m *Message) SetSafe(safe int) *Message {
+	m.safe = safe
+	return m
 }
 
-// File method creates file msg.
-func (m *Message) File(mediaId string) *file {
-	return &file{
-		base:    base{message: m},
-		mediaId: mediaId,
-	}
+// SetEnableIdTrans method sets the message enable id translation.
+// Support Message Kind: Text, Textcard
+func (m *Message) SetEnableIdTrans(enableIdTrans int) *Message {
+	m.enableIdTrans = enableIdTrans
+	return m
 }
 
-// Textcard method creates textcard msg.
-func (m *Message) Textcard(title, description, url string) *textcard {
-	return &textcard{
-		base:        base{message: m},
-		title:       title,
-		description: description,
-		url:         url,
+// DuplicateCheck method enables the duplicate check.
+// Param example:
+// 0, 0 duplicate check is not enabled.
+// 1, 1800 duplicate check within 1800 seconds.
+func (m *Message) DuplicateCheck(enableDuplicateCheck, duplicateCheckInterval int) *Message {
+	m.enableDuplicateCheck = enableDuplicateCheck
+	if m.enableDuplicateCheck == 1 {
+		m.duplicateCheckInterval = duplicateCheckInterval
 	}
+	return m
 }
 
-// Markdown method creates markdown msg.
-func (m *Message) Markdown(content string) *markdown {
-	return &markdown{
-		base:    base{message: m},
-		content: content,
-	}
-}
-
+// clone method create the new message app.
 func (m *Message) clone() *Message {
 	newMessage := *m
 	return &newMessage
 }
 
-func (m *Message) build() (map[string]interface{}, error) {
+// genRequestParam method generate http request params.
+func (m *Message) genRequestParam() (map[string]interface{}, error) {
 
 	if m.toUser == "" && m.toParty == "" && m.toTag == "" {
-		return nil, errors.New("touser, toparty, totag cannot be empty at the same time")
+		return nil, errors.New("toUser, toParty, toTag cannot be empty at the same time")
 	}
 
 	body := map[string]interface{}{
-		"touser":                   m.toUser,
-		"toparty":                  m.toParty,
-		"totag":                    m.toTag,
-		"agentid":                  m.client.Agentid(),
-		"enable_duplicate_check":   m.enableDuplicateCheck,
-		"duplicate_check_interval": m.duplicateCheckInterval,
+		"agentid": m.app.GetAgentid(),
+	}
+	if m.toUser != "" {
+		body["touser"] = m.toUser
+	}
+	if m.toParty != "" {
+		body["toparty"] = m.toParty
+	}
+	if m.toTag != "" {
+		body["totag"] = m.toTag
+	}
+	if m.enableDuplicateCheck != 0 {
+		body["enable_duplicate_check"] = m.enableDuplicateCheck
+	}
+	if m.enableDuplicateCheck != 0 {
+		body["duplicate_check_interval"] = m.duplicateCheckInterval
 	}
 
 	switch m.msgType {
 	case "text":
-		body["msgtype"] = "text"
 		body["text"] = map[string]string{"content": m.content}
 		body["safe"] = m.safe
 		body["enable_id_trans"] = m.enableIdTrans
 	case "image":
 		body["msgtype"] = "image"
 		body["image"] = map[string]string{"media_id": m.mediaId}
+		body["safe"] = m.safe
 	case "voice":
 		body["msgtype"] = "voice"
 		body["voice"] = map[string]string{"media_id": m.mediaId}
@@ -146,7 +147,7 @@ func (m *Message) build() (map[string]interface{}, error) {
 		body["safe"] = m.safe
 	case "textcard":
 		body["msgtype"] = "textcard"
-		body["textcard"] = map[string]string{"title": m.title, "description": m.description, "path": m.url, "btntxt": m.btnTxt}
+		body["textcard"] = map[string]string{"title": m.title, "description": m.description, "url": m.url, "btntxt": m.btnTxt}
 		body["enable_id_trans"] = m.enableIdTrans
 	case "markdown":
 		body["msgtype"] = "markdown"
@@ -155,30 +156,109 @@ func (m *Message) build() (map[string]interface{}, error) {
 		return nil, errors.New("unsupported msg type")
 	}
 
+	body["msgtype"] = m.msgType
+
 	return body, nil
 }
 
+// toJson method return message string.
+func (m *Message) toJson() string {
+	param, err := m.genRequestParam()
+	if err != nil {
+		log.Fatalln(err)
+		return ""
+	}
+
+	paramBytes, err := json.Marshal(param)
+	if err != nil {
+		log.Fatalln(err)
+		return ""
+	}
+
+	return string(paramBytes)
+}
+
+// send method does send message.
 func (m *Message) send() (*RespMessage, error) {
 	var response *RespMessage
 
-	body, err := m.build()
+	body, err := m.genRequestParam()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = m.client.Resty.R().
-		SetQueryParam("access_token", m.client.GetAccessToken()).
+	_, err = m.app.Resty.R().
+		SetQueryParam("access_token", m.app.GetAccessToken()).
 		SetHeader("Content-Type", "application/json; charset=UTF-8").
 		SetBody(body).
 		SetResult(&response).
+		SetError(&response).
 		Post(m.path)
 	if err != nil {
 		return nil, err
 	}
 
-	if wxcom.IsTokenInvalidErr(response.Errcode, m.client) {
+	if wxcom.IsTokenInvalidErr(response.Errcode, m.app) {
 		return m.send()
 	}
 
 	return response, nil
+}
+
+// Text method creates text message.
+func (m *Message) Text(content string) *text {
+	return &text{
+		message: m,
+		content: content,
+	}
+}
+
+// Image method creates image message.
+func (m *Message) Image(mediaId string) *image {
+	return &image{
+		message: m,
+		mediaId: mediaId,
+	}
+}
+
+// Voice method creates voice message.
+func (m *Message) Voice(mediaId string) *voice {
+	return &voice{
+		message: m,
+		mediaId: mediaId,
+	}
+}
+
+// Video method creates video message.
+func (m *Message) Video(mediaId string) *video {
+	return &video{
+		message: m,
+		mediaId: mediaId,
+	}
+}
+
+// File method creates file message.
+func (m *Message) File(mediaId string) *file {
+	return &file{
+		message: m,
+		mediaId: mediaId,
+	}
+}
+
+// Textcard method creates textcard message.
+func (m *Message) Textcard(title, description, url string) *textcard {
+	return &textcard{
+		message:     m,
+		title:       title,
+		description: description,
+		url:         url,
+	}
+}
+
+// Markdown method creates markdown message.
+func (m *Message) Markdown(content string) *markdown {
+	return &markdown{
+		message: m,
+		content: content,
+	}
 }
