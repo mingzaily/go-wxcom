@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Message struct is used to compose and fire individual message push with wxcom Wxcom client.
+// Message struct is used to compose and fire individual message client.
 type Message struct {
 	wx                     *Wxcom
 	path                   string
@@ -70,12 +70,12 @@ func (m *Message) DuplicateCheck(enableDuplicateCheck, duplicateCheckInterval in
 	return m
 }
 
-// Clone method create the new message wx.
+// Clone method create the new message client.
 func (m *Message) Clone() *Message {
 	return m.clone()
 }
 
-// clone method create the new message wx.
+// clone method create the new message client.
 func (m *Message) clone() *Message {
 	newMessage := *m
 	return &newMessage
