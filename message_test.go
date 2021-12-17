@@ -1,141 +1,205 @@
-package wxcom
+package wxcom_test
 
 import (
-	"fmt"
-	"os"
+	"github.com/mingzaily/go-wxcom"
 	"testing"
-	"time"
 )
 
-var testuser = os.Getenv("TEST_USER")
+var msg = wxcom.New("123", "321", 123).M()
 
-var message = wx.Message().SetTouser([]string{testuser})
+func TestMessage_NotToPeople(t *testing.T) {
+	m := msg.Clone().Text("测试TEXT")
 
-func TestMessage(t *testing.T) {
-	wx.cache.Set("access_token_"+fmt.Sprintf("%d", wx.agentid), "test_token", time.Minute)
+	_, err := m.Send()
+	assertEqual(t,
+		err.Error(),
+		"toUser, toParty, toTag cannot be empty at the same time")
 
-	tempMessage := message.SetDuplicateCheck(1, 30)
-
-	assertEqual(t, tempMessage.enableDuplicateCheck, 1)
-	assertEqual(t, tempMessage.duplicateCheckInterval, 30)
-
-	resp, err := tempMessage.Text("你的快递已到，请携带工卡前往邮件中心领取。").Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"")
 }
 
-func TestMessage_NotTo(t *testing.T) {
-	tempMessage := wx.Message().SetTouser([]string{}).SetTotag([]string{}).SetToparty([]string{})
+func TestMessage_Send(t *testing.T) {
+	ts := createTestServer(t)
+	defer ts.Close()
 
-	_, err := tempMessage.Text("你的快递已到，请携带工卡前往邮件中心领取。").Send()
+	tempWx := wxcom.New("123", "321", 123)
+	tempWx.Resty.SetBaseURL(ts.URL)
 
-	assertEqual(t, err.Error(), "touser, toparty, totag cannot be empty at the same time")
+	resp, err := tempWx.NewMessage().ToUser([]string{"test"}).Text("测试TEXT").Send()
+
+	assertEqual(t, err, nil)
+	assertEqual(t, resp.Errcode, 0)
+	assertEqual(t, resp.Errmsg, "ok")
+	assertEqual(t, resp.Msgid, "msgid")
+}
+
+func TestMessage_ToUser(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"user"}).Text("测试TEXT")
+
+	assertEqual(t, m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"text\",\"safe\":0,\"text\":{\"content\":\"测试TEXT\"},\"touser\":\"user\"}")
+}
+
+func TestMessage_ToParty(t *testing.T) {
+	m := msg.Clone().ToParty([]string{"party"}).Text("测试TEXT")
+
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"text\",\"safe\":0,\"text\":{\"content\":\"测试TEXT\"},\"toparty\":\"party\"}")
+}
+
+func TestMessage_ToTag(t *testing.T) {
+	m := msg.Clone().ToTag([]string{"tag"}).Text("测试TEXT")
+
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"text\",\"safe\":0,\"text\":{\"content\":\"测试TEXT\"},\"totag\":\"tag\"}")
+}
+
+func TestMessage_DuplicateCheck(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"user"}).DuplicateCheck(0, 1800).Text("测试TEXT")
+
+	assertEqual(t, m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"text\",\"safe\":0,\"text\":{\"content\":\"测试TEXT\"},\"touser\":\"user\"}")
+
+	m = msg.Clone().ToUser([]string{"user"}).DuplicateCheck(1, 1800).Text("测试TEXT")
+
+	assertEqual(t, m.ToJson(),
+		"{\"agentid\":123,\"duplicate_check_interval\":1800,\"enable_duplicate_check\":1,\"enable_id_trans\":0,\"msgtype\":\"text\",\"safe\":0,\"text\":{\"content\":\"测试TEXT\"},\"touser\":\"user\"}")
 }
 
 func TestMessage_Text(t *testing.T) {
-	text := message.Text("你的快递已到，请携带工卡前往邮件中心领取。")
+	m := msg.Clone().ToUser([]string{"test"}).Text("测试TEXT")
 
-	resp, err := text.SetSafe(1).SetEnableIdTrans(0).Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"text\",\"safe\":0,\"text\":{\"content\":\"测试TEXT\"},\"touser\":\"test\"}")
+}
 
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+func TestMessage_Text_SetSafe(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Text("测试TEXT").SetSafe(1)
 
-	assertEqual(t, text.safe, 1)
-	assertEqual(t, text.enableIdTrans, 0)
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"text\",\"safe\":1,\"text\":{\"content\":\"测试TEXT\"},\"touser\":\"test\"}")
+}
+
+func TestMessage_Text_SetEnableIdTrans(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Text("测试TEXT").SetEnableIdTrans(1)
+
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":1,\"msgtype\":\"text\",\"safe\":0,\"text\":{\"content\":\"测试TEXT\"},\"touser\":\"test\"}")
+}
+
+func TestMessage_Clone(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Image("cac8d983-5d58-4603-9671-adb3edf2edf3")
+
+	assertNotEqual(t, m, msg)
 }
 
 func TestMessage_Image(t *testing.T) {
-	image := message.Image("3g2xoY5c_JUrK7-kQHW-__FXmsehOQyKX3116lrgx0jA")
+	m := msg.Clone().ToUser([]string{"test"}).Image("cac8d983-5d58-4603-9671-adb3edf2edf3")
 
-	resp, err := image.SetSafe(1).Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"image\":{\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\"},\"msgtype\":\"image\",\"safe\":0,\"touser\":\"test\"}")
+}
 
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+func TestMessage_Image_SetSafe(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Image("cac8d983-5d58-4603-9671-adb3edf2edf3").SetSafe(1)
 
-	assertEqual(t, image.safe, 1)
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"image\":{\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\"},\"msgtype\":\"image\",\"safe\":1,\"touser\":\"test\"}")
 }
 
 func TestMessage_Voice(t *testing.T) {
-	voice := message.Voice("37ucz7oOvPVWwrJBtMrj4xfPdrSuhlUsnxvBUnDixSYc6YvNAnVwRLVvN_KeWX1X8")
+	m := msg.Clone().ToUser([]string{"test"}).Voice("cac8d983-5d58-4603-9671-adb3edf2edf3")
 
-	resp, err := voice.Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"msgtype\":\"voice\",\"touser\":\"test\",\"voice\":{\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\"}}")
 }
 
 func TestMessage_Video(t *testing.T) {
-	video := message.Video("39tHzT7JokszltSEojcgjbJYO7tQqDOBlCL_wnj72kJXT3t0spBqt6_rlJNCHiyBM", "MP4", "mp4")
+	m := msg.Clone().ToUser([]string{"test"}).Video("cac8d983-5d58-4603-9671-adb3edf2edf3")
 
-	resp, err := video.SetSafe(1).Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"msgtype\":\"video\",\"safe\":0,\"touser\":\"test\",\"video\":{\"description\":\"\",\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\",\"title\":\"\"}}")
+}
 
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+func TestMessage_Video_SetSafe(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Video("cac8d983-5d58-4603-9671-adb3edf2edf3").SetSafe(1)
 
-	assertEqual(t, video.safe, 1)
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"msgtype\":\"video\",\"safe\":1,\"touser\":\"test\",\"video\":{\"description\":\"\",\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\",\"title\":\"\"}}")
+}
+
+func TestMessage_Video_SetTitle(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Video("cac8d983-5d58-4603-9671-adb3edf2edf3").SetTitle("标题")
+
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"msgtype\":\"video\",\"safe\":0,\"touser\":\"test\",\"video\":{\"description\":\"\",\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\",\"title\":\"标题\"}}")
+}
+
+func TestMessage_Video_SetDescription(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Video("cac8d983-5d58-4603-9671-adb3edf2edf3").SetDescription("描述")
+
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"msgtype\":\"video\",\"safe\":0,\"touser\":\"test\",\"video\":{\"description\":\"描述\",\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\",\"title\":\"\"}}")
 }
 
 func TestMessage_File(t *testing.T) {
-	file := message.File("3HILVuh11h1SDGTTMQ61p1rGcle0ZbNqBykIlXh37bLE")
+	m := msg.Clone().ToUser([]string{"test"}).File("cac8d983-5d58-4603-9671-adb3edf2edf3")
 
-	resp, err := file.SetSafe(1).Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"file\":{\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\"},\"msgtype\":\"file\",\"safe\":0,\"touser\":\"test\"}")
+}
 
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+func TestMessage_File_SetSafe(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).File("cac8d983-5d58-4603-9671-adb3edf2edf3").SetSafe(1)
 
-	assertEqual(t, file.safe, 1)
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"file\":{\"media_id\":\"cac8d983-5d58-4603-9671-adb3edf2edf3\"},\"msgtype\":\"file\",\"safe\":1,\"touser\":\"test\"}")
 }
 
 func TestMessage_Textcard(t *testing.T) {
-	textcard := message.Textcard("领奖通知", "<div class=\"gray\">2016年9月26日</div> <div class=\"normal\">恭喜你抽中iPhone 7一台，领奖码：xxxx</div><div class=\"highlight\">请于2016年10月10日前联系行政同事领取</div>", "http://work.weixin.qq.com")
+	m := msg.Clone().ToUser([]string{"test"}).Textcard("标题", "描述", "url")
 
-	resp, err := textcard.SetBtntxt("详情").SetEnableIdTrans(0).Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"textcard\",\"textcard\":{\"btntxt\":\"\",\"description\":\"描述\",\"title\":\"标题\",\"url\":\"url\"},\"touser\":\"test\"}")
+}
 
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+func TestMessage_Textcard_SetBtnTxt(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Textcard("标题", "描述", "url").SetBtnTxt("按钮")
 
-	assertEqual(t, textcard.btntxt, "详情")
-	assertEqual(t, textcard.enableIdTrans, 0)
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":0,\"msgtype\":\"textcard\",\"textcard\":{\"btntxt\":\"按钮\",\"description\":\"描述\",\"title\":\"标题\",\"url\":\"url\"},\"touser\":\"test\"}")
+}
+
+func TestMessage_Textcard_SetEnableIdTrans(t *testing.T) {
+	m := msg.Clone().ToUser([]string{"test"}).Textcard("标题", "描述", "url").SetEnableIdTrans(1)
+
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"enable_id_trans\":1,\"msgtype\":\"textcard\",\"textcard\":{\"btntxt\":\"\",\"description\":\"描述\",\"title\":\"标题\",\"url\":\"url\"},\"touser\":\"test\"}")
 }
 
 func TestMessage_Markdown(t *testing.T) {
-	markdown := message.Markdown("您的会议室已经预定，稍后会同步到`邮箱` \n>**事项详情** \n>事　项：<font color=\"info\">开会</font> \n>组织者：@miglioguan \n>参与者：@miglioguan、@kunliu、@jamdeezhou、@kanexiong、@kisonwang \n> \n>会议室：<font color=\"info\">广州TIT 1楼 301</font> \n>日　期：<font color=\"warning\">2018年5月18日</font> \n>时　间：<font color=\"comment\">上午9:00-11:00</font> \n> \n>请准时参加会议。 \n> \n>如需修改会议信息，请点击：[修改会议信息](https://work.weixin.qq.com)")
+	m := msg.Clone().ToUser([]string{"test"}).Markdown("您的会议室已经预定")
 
-	resp, err := markdown.Send()
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	if !equal(resp.Errcode, 0) {
-		t.Error(resp.Errmsg)
-	}
+	assertEqual(t,
+		m.ToJson(),
+		"{\"agentid\":123,\"markdown\":{\"content\":\"您的会议室已经预定\"},\"msgtype\":\"markdown\",\"touser\":\"test\"}")
 }

@@ -1,6 +1,6 @@
 # go-wxcom
 
-![Travis (.org)](https://img.shields.io/travis/mingzaily/go-wxcom)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/mingzaily/go-wxcom/Go)
 ![Codecov](https://img.shields.io/codecov/c/github/mingzaily/go-wxcom)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mingzaily/wxcom-sdk)](https://goreportcard.com/report/github.com/mingzaily/wxcom-sdk)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/mingzaily/wxcom-sdk)
@@ -36,13 +36,13 @@ package main
 
 import (
   "fmt"
-  wxcom "github.com/mingzaily/go-wxcom"
+  "github.com/mingzaily/go-wxcom"
 )
 
 func main() {
   client := wxcom.New("corpid", "corpsecret", 0)
 
-  resp, err := client.Message().Text("测试").Send()
+  resp, err := client.M().ToUser([]string{"test_user"}).Text("测试").Send()
   if err != nil {
     panic(err)
   }

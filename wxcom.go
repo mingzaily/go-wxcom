@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Wxcom struct is used to create Wxcom client.
+// Wxcom struct is used to create wxcom client.
 //
 // The cache uses patrickmn/go-cache.
 // You can refer to related documents(https://github.com/patrickmn/go-cache) if necessary.
@@ -19,7 +19,14 @@ type Wxcom struct {
 	corpsecret string
 	agentid    int
 	cache      *cache.Cache
-	resty      *resty.Client
+	Resty      *resty.Client
+}
+
+type respAccessToken struct {
+	Errcode     int    `json:"errcode"`
+	Errmsg      string `json:"errmsg"`
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 // New method creates a new Wxcom client.
@@ -29,40 +36,26 @@ func New(corpid, corpsecret string, agentid int) *Wxcom {
 		corpsecret: corpsecret,
 		agentid:    agentid,
 		cache:      cache.New(5*time.Minute, 10*time.Minute),
-		resty:      resty.New(),
+		Resty:      resty.New().SetBaseURL("https://qyapi.weixin.qq.com/"),
 	}
 }
 
-// SetRestyDebug method enables the debug mode on Resty client. Client logs details of every request and response.
-// For `Request` it logs information such as HTTP verb, Relative URL path, Host, Headers, Body if it has one.
-// For `Response` it logs information such as Status, Response Time, Headers, Body if it has one.
-func (w *Wxcom) SetRestyDebug(d bool) *Wxcom {
-	w.resty.SetDebug(d)
-	return w
-}
-
-type accessTokenResponse struct {
-	Errcode     int    `json:"errcode"`
-	Errmsg      string `json:"errmsg"`
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-}
-
-func (w *Wxcom) getAccessTokenFromServer() *accessTokenResponse {
-	var response *accessTokenResponse
+func (w *Wxcom) getAccessTokenFromServer() *respAccessToken {
+	var response *respAccessToken
 
 	if w.corpid == "" && w.corpsecret == "" {
 		panic("corpid and corpsecret cannot be empty")
 	}
 
-	_, err := w.resty.R().
+	_, err := w.Resty.R().
 		SetQueryParam("corpid", w.corpid).
 		SetQueryParam("corpsecret", w.corpsecret).
 		SetResult(&response).
-		Get("https://qyapi.weixin.qq.com/cgi-bin/gettoken")
+		Get("/cgi-bin/gettoken")
 	if err != nil {
 		panic(err)
 	}
+
 	if response.Errcode != 0 {
 		panic(response.Errmsg)
 	}
@@ -70,7 +63,17 @@ func (w *Wxcom) getAccessTokenFromServer() *accessTokenResponse {
 	return response
 }
 
-func (w *Wxcom) getAccessToken() string {
+// isTokenInvalidErr method check whether the token has expired.
+func (w *Wxcom) isTokenInvalidErr(errcode int) bool {
+	if errcode == 42001 || errcode == 40014 {
+		w.cache.Delete("access_token_" + fmt.Sprintf("%d", w.agentid))
+		return true
+	}
+	return false
+}
+
+// GetAccessToken method get access token.
+func (w *Wxcom) GetAccessToken() string {
 	var cacheKey = "access_token_" + fmt.Sprintf("%d", w.agentid)
 
 	if value, found := w.cache.Get(cacheKey); found {
@@ -78,30 +81,25 @@ func (w *Wxcom) getAccessToken() string {
 	}
 
 	resp := w.getAccessTokenFromServer()
-
 	w.cache.Set(cacheKey, resp.AccessToken, time.Duration(resp.ExpiresIn-60)*time.Second)
 
 	return resp.AccessToken
 }
 
-// Message method creates a new message instance, its used for send message to user form App.
-func (w *Wxcom) Message() *Message {
+// GetAgentid method get agentid from client
+func (w *Wxcom) GetAgentid() int {
+	return w.agentid
+}
+
+// M method creates a new Message instance.
+func (w *Wxcom) M() *Message {
 	return &Message{
-		wxcom:   w,
-		url:     "https://qyapi.weixin.qq.com/cgi-bin/message/send",
-		agentid: w.agentid,
+		wx:   w,
+		path: "/cgi-bin/message/send",
 	}
 }
 
-//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Common method
-//__________________________________________________
-
-// IsTokenInvalidErr method check whether the token has expired.
-func IsTokenInvalidErr(errcode int, w *Wxcom) bool {
-	if errcode == 42001 || errcode == 40014 {
-		w.cache.Delete("access_token_" + fmt.Sprintf("%d", w.agentid))
-		return true
-	}
-	return false
+// NewMessage is an alias for method `M()`. Creates a new Message instance.
+func (w *Wxcom) NewMessage() *Message {
+	return w.M()
 }
