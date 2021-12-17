@@ -72,7 +72,7 @@ func (w *Wxcom) isTokenInvalidErr(errcode int) bool {
 	return false
 }
 
-// GetAccessToken method get access token.
+// GetAccessToken method get access token from server or cache.
 func (w *Wxcom) GetAccessToken() string {
 	var cacheKey = "access_token_" + fmt.Sprintf("%d", w.agentid)
 

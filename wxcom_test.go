@@ -21,6 +21,9 @@ func TestWxcom_GetAccessToken(t *testing.T) {
 	tempWx := wxcom.New("123", "321", 123)
 	tempWx.Resty.SetBaseURL(ts.URL)
 
+	// from server
+	assertEqual(t, tempWx.GetAccessToken(), "token")
+	// form token
 	assertEqual(t, tempWx.GetAccessToken(), "token")
 }
 
