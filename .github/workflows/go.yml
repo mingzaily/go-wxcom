@@ -1,0 +1,32 @@
+name: Go
+
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
+
+jobs:
+
+  code-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Before Script
+        run: |
+          date
+          find . -name "*.go" | xargs gofmt -w
+          git diff --name-only --exit-code || if [ $? != 0 ];then echo "Notice: gofmt check failed, please gofmt before pr." && exit 1; fi
+          echo "gofmt check pass."
+
+      - name: Test
+        run: go test -v ./... -race -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Report Coverage
+        uses: codecov/codecov-action@v2.1.0

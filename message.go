@@ -1,16 +1,15 @@
-package message
+package wxcom
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/mingzaily/go-wxcom"
 	"log"
 	"strings"
 )
 
-// Message struct is used to compose and fire individual message push with wxcom App client.
+// Message struct is used to compose and fire individual message push with wxcom Wxcom client.
 type Message struct {
-	app                    *wxcom.App
+	wx                     *Wxcom
 	path                   string
 	msgType                string
 	toUser                 string
@@ -41,14 +40,6 @@ type RespMessage struct {
 	ResponseCode string `json:"response_code"`
 }
 
-// NewWithApp method creates a new Message client with wxcom App client.
-func NewWithApp(client *wxcom.App) *Message {
-	return &Message{
-		app:  client,
-		path: "/cgi-bin/message/send",
-	}
-}
-
 // ToUser method sets to user to in the current message.
 func (m *Message) ToUser(userList []string) *Message {
 	m.toUser = strings.Join(userList, "|")
@@ -67,20 +58,6 @@ func (m *Message) ToTag(tagList []string) *Message {
 	return m
 }
 
-// SetSafe method sets the message is confident.
-// Support Message Kind: Text, Image, Video, File
-func (m *Message) SetSafe(safe int) *Message {
-	m.safe = safe
-	return m
-}
-
-// SetEnableIdTrans method sets the message enable id translation.
-// Support Message Kind: Text, Textcard
-func (m *Message) SetEnableIdTrans(enableIdTrans int) *Message {
-	m.enableIdTrans = enableIdTrans
-	return m
-}
-
 // DuplicateCheck method enables the duplicate check.
 // Param example:
 // 0, 0 duplicate check is not enabled.
@@ -93,7 +70,12 @@ func (m *Message) DuplicateCheck(enableDuplicateCheck, duplicateCheckInterval in
 	return m
 }
 
-// clone method create the new message app.
+// Clone method create the new message wx.
+func (m *Message) Clone() *Message {
+	return m.clone()
+}
+
+// clone method create the new message wx.
 func (m *Message) clone() *Message {
 	newMessage := *m
 	return &newMessage
@@ -107,7 +89,7 @@ func (m *Message) genRequestParam() (map[string]interface{}, error) {
 	}
 
 	body := map[string]interface{}{
-		"agentid": m.app.GetAgentid(),
+		"agentid": m.wx.GetAgentid(),
 	}
 	if m.toUser != "" {
 		body["touser"] = m.toUser
@@ -165,7 +147,6 @@ func (m *Message) genRequestParam() (map[string]interface{}, error) {
 func (m *Message) toJson() string {
 	param, err := m.genRequestParam()
 	if err != nil {
-		log.Fatalln(err)
 		return ""
 	}
 
@@ -187,8 +168,8 @@ func (m *Message) send() (*RespMessage, error) {
 		return nil, err
 	}
 
-	_, err = m.app.Resty.R().
-		SetQueryParam("access_token", m.app.GetAccessToken()).
+	_, err = m.wx.Resty.R().
+		SetQueryParam("access_token", m.wx.GetAccessToken()).
 		SetHeader("Content-Type", "application/json; charset=UTF-8").
 		SetBody(body).
 		SetResult(&response).
@@ -198,7 +179,7 @@ func (m *Message) send() (*RespMessage, error) {
 		return nil, err
 	}
 
-	if wxcom.IsTokenInvalidErr(response.Errcode, m.app) {
+	if m.wx.isTokenInvalidErr(response.Errcode) {
 		return m.send()
 	}
 

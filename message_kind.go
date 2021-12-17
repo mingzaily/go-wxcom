@@ -1,4 +1,4 @@
-package message
+package wxcom
 
 type KindMessage interface {
 	ToJson() string
@@ -7,8 +7,10 @@ type KindMessage interface {
 
 // text struct is used to compose text message push from message client.
 type text struct {
-	message *Message
-	content string
+	message       *Message
+	content       string
+	safe          int
+	enableIdTrans int
 }
 
 // build method create the new Message client.
@@ -16,7 +18,21 @@ func (t *text) build() *Message {
 	msg := t.message.clone()
 	msg.msgType = "text"
 	msg.content = t.content
+	msg.safe = t.safe
+	msg.enableIdTrans = t.enableIdTrans
 	return msg
+}
+
+// SetSafe method sets the text message is confident.
+func (t *text) SetSafe(safe int) *text {
+	t.safe = safe
+	return t
+}
+
+// SetEnableIdTrans method sets the text message enable id translation.
+func (t *text) SetEnableIdTrans(enableIdTrans int) *text {
+	t.enableIdTrans = enableIdTrans
+	return t
 }
 
 // ToJson method return text message string.
@@ -33,6 +49,7 @@ func (t *text) Send() (*RespMessage, error) {
 type image struct {
 	message *Message
 	mediaId string
+	safe    int
 }
 
 // build method create the new Message client.
@@ -40,7 +57,14 @@ func (i *image) build() *Message {
 	msg := i.message.clone()
 	msg.msgType = "image"
 	msg.mediaId = i.mediaId
+	msg.safe = i.safe
 	return msg
+}
+
+// SetSafe method sets the image message is confident.
+func (i *image) SetSafe(safe int) *image {
+	i.safe = safe
+	return i
 }
 
 // ToJson method return image message string.
@@ -83,6 +107,7 @@ type video struct {
 	mediaId     string
 	title       string
 	description string
+	safe        int
 }
 
 // build method create the new Message client.
@@ -92,6 +117,7 @@ func (v *video) build() *Message {
 	msg.mediaId = v.mediaId
 	msg.title = v.title
 	msg.description = v.description
+	msg.safe = v.safe
 	return msg
 }
 
@@ -104,6 +130,12 @@ func (v *video) SetTitle(title string) *video {
 // SetDescription method sets the video message description.
 func (v *video) SetDescription(description string) *video {
 	v.description = description
+	return v
+}
+
+// SetSafe method sets the video message is confident.
+func (v *video) SetSafe(safe int) *video {
+	v.safe = safe
 	return v
 }
 
@@ -121,13 +153,22 @@ func (v *video) Send() (*RespMessage, error) {
 type file struct {
 	message *Message
 	mediaId string
+	safe    int
 }
 
 // build method create the new Message client.
 func (f *file) build() *Message {
 	msg := f.message.clone()
+	msg.msgType = "file"
 	msg.mediaId = f.mediaId
+	msg.safe = f.safe
 	return msg
+}
+
+// SetSafe method sets the file message is confident.
+func (f *file) SetSafe(safe int) *file {
+	f.safe = safe
+	return f
 }
 
 // ToJson method return file message string.
@@ -142,11 +183,12 @@ func (f *file) Send() (*RespMessage, error) {
 
 // textcard struct is used to compose textcard message push from message client.wx_message
 type textcard struct {
-	message     *Message
-	title       string
-	description string
-	url         string
-	btnTxt      string
+	message       *Message
+	title         string
+	description   string
+	url           string
+	btnTxt        string
+	enableIdTrans int
 }
 
 // build method create the new Message client.
@@ -157,12 +199,19 @@ func (t *textcard) build() *Message {
 	msg.description = t.description
 	msg.url = t.url
 	msg.btnTxt = t.btnTxt
+	msg.enableIdTrans = t.enableIdTrans
 	return msg
 }
 
 // SetBtnTxt method sets the textcard message btn txt.
 func (t *textcard) SetBtnTxt(btnTxt string) *textcard {
 	t.btnTxt = btnTxt
+	return t
+}
+
+// SetEnableIdTrans method sets the textcard message enable id translation.
+func (t *textcard) SetEnableIdTrans(enableIdTrans int) *textcard {
+	t.enableIdTrans = enableIdTrans
 	return t
 }
 
