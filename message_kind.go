@@ -72,7 +72,7 @@ func (i *image) ToJson() string {
 	return i.build().toJson()
 }
 
-// Send method does send image message.
+// Send method does sendWithRetry image message.
 func (i *image) Send() (*RespMessage, error) {
 	return i.build().send()
 }
@@ -144,7 +144,7 @@ func (v *video) ToJson() string {
 	return v.build().toJson()
 }
 
-// Send method does send video message.
+// Send method does sendWithRetry video message.
 func (v *video) Send() (*RespMessage, error) {
 	return v.build().send()
 }
@@ -176,7 +176,7 @@ func (f *file) ToJson() string {
 	return f.build().toJson()
 }
 
-// Send method does send file message.
+// Send method does sendWithRetry file message.
 func (f *file) Send() (*RespMessage, error) {
 	return f.build().send()
 }
@@ -220,7 +220,7 @@ func (t *textcard) ToJson() string {
 	return t.build().toJson()
 }
 
-// Send method does send textcard message.
+// Send method does sendWithRetry textcard message.
 func (t *textcard) Send() (*RespMessage, error) {
 	return t.build().send()
 }

@@ -29,10 +29,9 @@ type Message struct {
 	duplicateCheckInterval int
 }
 
-// RespMessage struct holds response values of send message.
+// RespMessage struct holds response values of sendWithRetry message.
 type RespMessage struct {
-	Errcode      int    `json:"errcode"`
-	Errmsg       string `json:"errmsg"`
+	respCommon
 	Invaliduser  string `json:"invaliduser"`
 	Invalidparty string `json:"invalidparty"`
 	Invalidtag   string `json:"invalidtag"`
@@ -161,26 +160,16 @@ func (m *Message) toJson() string {
 
 // send method does send message.
 func (m *Message) send() (*RespMessage, error) {
-	var response *RespMessage
+	response := &RespMessage{}
 
 	body, err := m.genRequestParam()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = m.wx.Resty.R().
-		SetQueryParam("access_token", m.wx.GetAccessToken()).
-		SetHeader("Content-Type", "application/json; charset=UTF-8").
-		SetBody(body).
-		SetResult(&response).
-		SetError(&response).
-		Post(m.path)
+	err = m.wx.sendWithRetry(m.path, body, response)
 	if err != nil {
 		return nil, err
-	}
-
-	if m.wx.isTokenInvalidErr(response.Errcode) {
-		return m.send()
 	}
 
 	return response, nil
