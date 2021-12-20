@@ -1,6 +1,7 @@
 package wxcom
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/patrickmn/go-cache"
@@ -18,13 +19,18 @@ type Wxcom struct {
 	corpid     string
 	corpsecret string
 	agentid    int
+	retryCount int
 	cache      *cache.Cache
 	Resty      *resty.Client
 }
 
+type respCommon struct {
+	Errcode int    `json:"errcode"`
+	Errmsg  string `json:"errmsg"`
+}
+
 type respAccessToken struct {
-	Errcode     int    `json:"errcode"`
-	Errmsg      string `json:"errmsg"`
+	respCommon
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
 }
@@ -35,6 +41,7 @@ func New(corpid, corpsecret string, agentid int) *Wxcom {
 		corpid:     corpid,
 		corpsecret: corpsecret,
 		agentid:    agentid,
+		retryCount: 1,
 		cache:      cache.New(5*time.Minute, 10*time.Minute),
 		Resty:      resty.New().SetBaseURL("https://qyapi.weixin.qq.com/"),
 	}
@@ -64,12 +71,35 @@ func (w *Wxcom) getAccessTokenFromServer() *respAccessToken {
 }
 
 // isTokenInvalidErr method check whether the token has expired.
-func (w *Wxcom) isTokenInvalidErr(errcode int) bool {
-	if errcode == 42001 || errcode == 40014 {
-		w.cache.Delete("access_token_" + fmt.Sprintf("%d", w.agentid))
-		return true
+func (w *Wxcom) sendWithRetry(path string, body map[string]interface{}, result interface{}) error {
+
+	for i := 0; i <= w.retryCount; i++ {
+
+		resp := &respCommon{}
+
+		response, err := w.Resty.R().
+			SetHeader("Content-Type", "application/json; charset=UTF-8").
+			SetQueryParam("access_token", w.GetAccessToken()).
+			SetBody(body).
+			SetResult(&result).
+			SetError(&result).Post(path)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(response.Body(), &resp)
+		if err != nil {
+			return err
+		}
+
+		if resp.Errcode != 42001 && resp.Errcode != 40014 {
+			break
+		} else {
+			w.cache.Delete("access_token_" + fmt.Sprintf("%d", w.agentid))
+		}
 	}
-	return false
+
+	return nil
 }
 
 // GetAccessToken method get access token from server or cache.
