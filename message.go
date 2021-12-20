@@ -29,7 +29,7 @@ type Message struct {
 	duplicateCheckInterval int
 }
 
-// RespMessage struct holds response values of sendWithRetry message.
+// RespMessage struct holds response values of send message.
 type RespMessage struct {
 	respCommon
 	Invaliduser  string `json:"invaliduser"`
@@ -88,7 +88,7 @@ func (m *Message) genRequestParam() (map[string]interface{}, error) {
 	}
 
 	body := map[string]interface{}{
-		"agentid": m.wx.GetAgentid(),
+		"agentid": m.wx.agentid,
 	}
 	if m.toUser != "" {
 		body["touser"] = m.toUser
@@ -167,7 +167,7 @@ func (m *Message) send() (*RespMessage, error) {
 		return nil, err
 	}
 
-	err = m.wx.sendWithRetry(m.path, body, response)
+	err = m.wx.sendWithRetry(m.path, nil, body, response)
 	if err != nil {
 		return nil, err
 	}
