@@ -116,7 +116,7 @@ func (w *Wxcom) GetAccessToken() string {
 	return resp.AccessToken
 }
 
-// GetAgentid method get agentid from client
+// GetAgentid method get agentid from client.
 func (w *Wxcom) GetAgentid() int {
 	return w.agentid
 }

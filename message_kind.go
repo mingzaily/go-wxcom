@@ -1,10 +1,5 @@
 package wxcom
 
-type KindMessage interface {
-	ToJson() string
-	Send() (*RespMessage, error)
-}
-
 // text struct is used to compose text message push from message client.
 type text struct {
 	message       *Message
