@@ -71,8 +71,7 @@ func (w *Wxcom) getAccessTokenFromServer() *respAccessToken {
 }
 
 // isTokenInvalidErr method check whether the token has expired.
-func (w *Wxcom) sendWithRetry(path string, body map[string]interface{}, result interface{}) error {
-
+func (w *Wxcom) sendWithRetry(path string, query map[string]string, body map[string]interface{}, result interface{}) error {
 	for i := 0; i <= w.retryCount; i++ {
 
 		resp := &respCommon{}
@@ -80,6 +79,7 @@ func (w *Wxcom) sendWithRetry(path string, body map[string]interface{}, result i
 		response, err := w.Resty.R().
 			SetHeader("Content-Type", "application/json; charset=UTF-8").
 			SetQueryParam("access_token", w.GetAccessToken()).
+			SetQueryParams(query).
 			SetBody(body).
 			SetResult(&result).
 			SetError(&result).Post(path)
@@ -132,4 +132,17 @@ func (w *Wxcom) M() *Message {
 // NewMessage is an alias for method `M()`. Creates a new Message instance.
 func (w *Wxcom) NewMessage() *Message {
 	return w.M()
+}
+
+// O method creates a new Oauth instance.
+func (w *Wxcom) O() *Oauth {
+	return &Oauth{
+		wx:   w,
+		path: "/cgi-bin/user/getuserinfo",
+	}
+}
+
+// NewOauth is an alias for method `O()`. Creates a new Oauth instance.
+func (w *Wxcom) NewOauth() *Oauth {
+	return w.O()
 }

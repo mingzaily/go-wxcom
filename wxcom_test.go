@@ -67,6 +67,9 @@ func createTestServer(t *testing.T) *httptest.Server {
 				_, _ = w.Write([]byte("{\"errcode\":42001,\"errmsg\":\"invalid access_token\"}"))
 			}
 			time++
+		case "/cgi-bin/user/getuserinfo":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte("{\"errcode\":0,\"errmsg\":\"ok\",\"UserId\":\"test_user\",\"DeviceId\":\"device\"}"))
 		}
 	}
 
