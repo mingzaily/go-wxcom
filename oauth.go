@@ -20,7 +20,7 @@ type RespOauth struct {
 	ExternalUserId string `json:"external_userid"`
 }
 
-// GenAuthorizationUrl method to construct web page authorization link
+// GenAuthorizationUrl method to construct web page authorization link.
 func (o *Oauth) GenAuthorizationUrl(redirectUri string) string {
 	return fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize"+
 		"?appid=%s"+
@@ -31,7 +31,7 @@ func (o *Oauth) GenAuthorizationUrl(redirectUri string) string {
 		"#wechat_redirect", o.wx.corpid, url.QueryEscape(redirectUri))
 }
 
-// GenAuthorizeScanCodeUrl method to build the scan code login authorization link
+// GenAuthorizeScanCodeUrl method to build the scan code login authorization link.
 func (o *Oauth) GenAuthorizeScanCodeUrl(redirectUri string) string {
 	return fmt.Sprintf("https://open.work.weixin.qq.com/wwopen/sso/qrConnect"+
 		"?appid=%s"+
@@ -40,6 +40,7 @@ func (o *Oauth) GenAuthorizeScanCodeUrl(redirectUri string) string {
 		"&state=", o.wx.corpid, o.wx.agentid, url.QueryEscape(redirectUri))
 }
 
+// GetUserInfo method to obtain user information through code.
 func (o *Oauth) GetUserInfo(code string) (*RespOauth, error) {
 	response := &RespOauth{}
 
