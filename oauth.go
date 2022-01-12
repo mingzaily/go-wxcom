@@ -31,6 +31,17 @@ func (o *Oauth) GenAuthorizationUrl(redirectUri string) string {
 		"#wechat_redirect", o.wx.corpid, url.QueryEscape(redirectUri))
 }
 
+// GenAuthorizationUrlWithState method to construct web page authorization link with state.
+func (o *Oauth) GenAuthorizationUrlWithState(redirectUri, state string) string {
+	return fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize"+
+		"?appid=%s"+
+		"&redirect_uri=%s"+
+		"&response_type=code"+
+		"&scope=snsapi_base"+
+		"&state=%s"+
+		"#wechat_redirect", o.wx.corpid, url.QueryEscape(redirectUri), state)
+}
+
 // GenAuthorizeScanCodeUrl method to build the scan code login authorization link.
 func (o *Oauth) GenAuthorizeScanCodeUrl(redirectUri string) string {
 	return fmt.Sprintf("https://open.work.weixin.qq.com/wwopen/sso/qrConnect"+
@@ -38,6 +49,15 @@ func (o *Oauth) GenAuthorizeScanCodeUrl(redirectUri string) string {
 		"&agentid=%d"+
 		"&redirect_uri=%s"+
 		"&state=", o.wx.corpid, o.wx.agentid, url.QueryEscape(redirectUri))
+}
+
+// GenAuthorizeScanCodeUrlWithState method to build the scan code login authorization link with state.
+func (o *Oauth) GenAuthorizeScanCodeUrlWithState(redirectUri, state string) string {
+	return fmt.Sprintf("https://open.work.weixin.qq.com/wwopen/sso/qrConnect"+
+		"?appid=%s"+
+		"&agentid=%d"+
+		"&redirect_uri=%s"+
+		"&state=%s", o.wx.corpid, o.wx.agentid, url.QueryEscape(redirectUri), state)
 }
 
 // GetUserInfo method to obtain user information through code.

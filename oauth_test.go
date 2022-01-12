@@ -13,12 +13,28 @@ func TestOauth_GenAuthorizationUrl(t *testing.T) {
 		"https://open.weixin.qq.com/connect/oauth2/authorize?appid=123&redirect_uri=https%3A%2F%2Ftest.com%2Fquery&response_type=code&scope=snsapi_base&state=#wechat_redirect")
 }
 
+func TestOauth_GenAuthorizationUrlWithState(t *testing.T) {
+	oauth := wx.O()
+
+	assertEqual(t,
+		oauth.GenAuthorizationUrlWithState("https://test.com/query", "abc"),
+		"https://open.weixin.qq.com/connect/oauth2/authorize?appid=123&redirect_uri=https%3A%2F%2Ftest.com%2Fquery&response_type=code&scope=snsapi_base&state=abc#wechat_redirect")
+}
+
 func TestOauth_GenAuthorizeScanCodeUrl(t *testing.T) {
 	oauth := wx.NewOauth()
 
 	assertEqual(t,
 		oauth.GenAuthorizeScanCodeUrl("https://test.com/query"),
 		"https://open.work.weixin.qq.com/wwopen/sso/qrConnect?appid=123&agentid=1&redirect_uri=https%3A%2F%2Ftest.com%2Fquery&state=")
+}
+
+func TestOauth_GenAuthorizeScanCodeUrlWithState(t *testing.T) {
+	oauth := wx.NewOauth()
+
+	assertEqual(t,
+		oauth.GenAuthorizeScanCodeUrlWithState("https://test.com/query", "abc"),
+		"https://open.work.weixin.qq.com/wwopen/sso/qrConnect?appid=123&agentid=1&redirect_uri=https%3A%2F%2Ftest.com%2Fquery&state=abc")
 }
 
 func TestOauth_GetUserInfo(t *testing.T) {
